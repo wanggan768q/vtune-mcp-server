@@ -1,0 +1,9 @@
+[project]
+name = "vtune-mcp-server"
+version = "0.1.0"
+description = "MCP Server exposing Intel VTune Profiler CLI for Claude Code"
+requires-python = ">=3.10"
+dependencies = ["mcp>=1.2.0"]
+
+[project.scripts]
+vtune-mcp-server = "server:mcp.run"
