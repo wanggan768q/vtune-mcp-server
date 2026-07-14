@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>{title}</title>
+<style>
+  :root { --bg:#f8f9fa; --fg:#212529; --header-bg:#343a40; --header-fg:#fff; --border:#dee2e6; --accent:#0d6efd; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1e1e1e; --fg:#d4d4d4; --header-bg:#2d2d2d; --header-fg:#fff; --border:#3c3c3c; --accent:#58a6ff; }
+  }
+  body { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; background:var(--bg); color:var(--fg); margin:0; padding:24px; }
+  h1 { font-size:1.25rem; margin-bottom:12px; }
+  .meta { font-size:0.85rem; color:#868e96; margin-bottom:16px; }
+  table { width:100%; border-collapse:collapse; font-size:0.85rem; background:var(--bg); }
+  th, td { border-bottom:1px solid var(--border); padding:6px 10px; text-align:right; white-space:nowrap; }
+  th { background:var(--header-bg); color:var(--header-fg); position:sticky; top:0; z-index:1; }
+  td:first-child, th:first-child { text-align:left; white-space:normal; min-width:320px; }
+  .num { font-variant-numeric:tabular-nums; }
+  .fname { margin-left:4px; }
+  .toggle { cursor:pointer; display:inline-block; width:14px; color:var(--accent); user-select:none; }
+  .toggle-placeholder { display:inline-block; width:14px; }
+  .diff-worse { color:#dc3545; font-weight:600; }
+  .diff-better { color:#198754; font-weight:600; }
+  .diff-neutral { color:#6c757d; }
+  tr.collapsed .toggle { transform:rotate(-90deg); }
+</style>
+</head>
+<body>
+<h1>{title}</h1>
+<div class="meta">{baseline_name} vs {compare_name} | Depth ≤ {max_depth}</div>
+<table>
+<thead>
+<tr>
+  <th>Function</th>
+  <th>{baseline_name}(Total%)</th>
+  <th>{compare_name}(Total%)</th>
+  <th>{baseline_name}(Self%)</th>
+  <th>{compare_name}(Self%)</th>
+  <th>Diff(Total)</th>
+  <th>Diff(Self)</th>
+</tr>
+</thead>
+<tbody>
+{rows}
+</tbody>
+</table>
+<script>
+function toggleRow(el) {
+  var row = el.closest('tr');
+  var depth = parseInt(row.dataset.depth);
+  var next = row.nextElementSibling;
+  var hide = !row.classList.contains('collapsed');
+  while (next) {
+    var nd = parseInt(next.dataset.depth);
+    if (nd <= depth) break;
+    if (hide) {
+      next.style.display = 'none';
+    } else {
+      next.style.display = '';
+      // Remove collapsed state from children so their arrows are correct
+      next.classList.remove('collapsed');
+    }
+    next = next.nextElementSibling;
+  }
+  row.classList.toggle('collapsed');
+}
+</script>
+</body>
+</html>
