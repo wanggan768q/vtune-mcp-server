@@ -17,6 +17,18 @@ VTUNE_PATH = os.environ.get(
 MAX_OUTPUT = 50000  # ponytail: truncate to avoid MCP token ceiling
 
 
+def _save_csv(result_dir: str, output: str, suffix: str = "") -> str:
+    """Save CSV output into the result directory. Returns file path."""
+    name = Path(result_dir).name
+    filename = f"{name}{suffix}.csv"
+    out_path = Path(result_dir) / filename
+    try:
+        out_path.write_text(output, encoding="utf-8")
+        return str(out_path)
+    except Exception as e:
+        return f"[Save Error] {e}"
+
+
 def _run_vtune(args: list[str], timeout: int = 120) -> str:
     """Run vtune CLI and return stdout or error message."""
     cmd = [VTUNE_PATH] + args
@@ -55,6 +67,7 @@ def vtune_report(
     report_type: str = "hotspots",
     format: str = "csv",
     group_by: str = "function",
+    save_csv: bool = True,
 ) -> str:
     """Generate a VTune profiling report from a result directory.
 
@@ -63,6 +76,7 @@ def vtune_report(
         report_type: Report type — hotspots, summary, top-down, callstacks, hw-events
         format: Output format — csv or text
         group_by: Grouping — function, module, source-file, thread
+        save_csv: Save CSV output to result_dir/<name>.csv (only when format=csv)
     """
     result_dir = _resolve_result_dir(result_dir)
     args = [
@@ -72,7 +86,11 @@ def vtune_report(
     ]
     if report_type not in ("summary",):
         args += ["-group-by", group_by]
-    return _run_vtune(args)
+    output = _run_vtune(args)
+    if save_csv and format == "csv" and not output.startswith("["):
+        saved = _save_csv(result_dir, output)
+        return f"{output}\n\n[Saved] {saved}"
+    return output
 
 
 @mcp.tool()
@@ -117,6 +135,7 @@ def vtune_compare(
     result_dir_2: str,
     report_type: str = "hotspots",
     format: str = "csv",
+    save_csv: bool = True,
 ) -> str:
     """Compare two VTune result directories.
 
@@ -125,6 +144,7 @@ def vtune_compare(
         result_dir_2: Second result directory (comparison)
         report_type: Report type — hotspots, summary, top-down
         format: Output format — csv or text
+        save_csv: Save CSV output to baseline result_dir/<name1>_vs_<name2>.csv (only when format=csv)
     """
     result_dir_1 = _resolve_result_dir(result_dir_1)
     result_dir_2 = _resolve_result_dir(result_dir_2)
@@ -134,7 +154,13 @@ def vtune_compare(
         "-compare-with", result_dir_2,
         "-format", format,
     ]
-    return _run_vtune(args)
+    output = _run_vtune(args)
+    if save_csv and format == "csv" and not output.startswith("["):
+        name1 = Path(result_dir_1).name
+        name2 = Path(result_dir_2).name
+        saved = _save_csv(result_dir_1, output, suffix=f"_vs_{name2}")
+        return f"{output}\n\n[Saved] {saved}"
+    return output
 
 
 @mcp.tool()
@@ -153,6 +179,7 @@ def vtune_hotspots(
     result_dir: str,
     top_n: int = 30,
     group_by: str = "function",
+    save_csv: bool = True,
 ) -> str:
     """Get top N hotspot functions from a VTune result (CSV format for easy AI analysis).
 
@@ -160,6 +187,7 @@ def vtune_hotspots(
         result_dir: Path to VTune result directory
         top_n: Number of top functions to return (default 30)
         group_by: Grouping — function, module, source-file, thread
+        save_csv: Save CSV output to result_dir/<name>_hotspots.csv
     """
     result_dir = _resolve_result_dir(result_dir)
     output = _run_vtune([
@@ -172,17 +200,17 @@ def vtune_hotspots(
         return output
     # Keep header + top_n data lines
     lines = output.splitlines()
-    header_lines = [l for l in lines if l.startswith(("Function", "Module", "Source", "Thread", '"'))]
-    data_lines = [l for l in lines if l and l not in header_lines]
-    # CSV from vtune: first line is header, rest are data
     if lines:
         result_lines = [lines[0]] + lines[1 : top_n + 1]
-        return "\n".join(result_lines)
+        output = "\n".join(result_lines)
+    if save_csv:
+        saved = _save_csv(result_dir, output, suffix="_hotspots")
+        return f"{output}\n\n[Saved] {saved}"
     return output
 
 
 def main():
-    """Entry point for package installation (uvx/pip)."""
+    """Entry point — run via `python server.py` or uvx."""
     mcp.run(transport="stdio")
 
 

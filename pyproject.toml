@@ -6,7 +6,7 @@ requires-python = ">=3.10"
 dependencies = ["mcp>=1.2.0"]
 
 [project.scripts]
-vtune-mcp-server = "vtune_mcp_server.server:main"
+vtune-mcp-server = "server:main"
 
 [build-system]
 requires = ["hatchling"]
