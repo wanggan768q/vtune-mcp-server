@@ -6,24 +6,44 @@
 
 ### 前置条件
 
-- Python 3.10+（已安装 `mcp` SDK）
-- Intel VTune 2026.1（默认路径 `C:\Program Files (x86)\Intel\oneAPI\vtune\2026.1`）
-
-### 安装 MCP SDK（如未安装）
-
-```bash
-pip install "mcp>=1.2.0"
-```
+- Python 3.10+
+- Intel VTune Profiler（默认路径 `C:\Program Files (x86)\Intel\oneAPI\vtune\2026.1`）
 
 ## 注册到 Claude Code
 
-### 方式 1：命令行注册（推荐）
+### 方式 1：通过 GitHub 地址安装（推荐分享给他人）
+
+```bash
+claude mcp add --scope user vtune-profiler -e VTUNE_PATH="C:/Program Files (x86)/Intel/oneAPI/vtune/2026.1/bin64/vtune.exe" -- uvx --from git+https://github.com/wanggan768q/vtune-mcp-server vtune-mcp-server
+```
+
+或使用 pip：
+
+```bash
+pip install git+https://github.com/wanggan768q/vtune-mcp-server
+claude mcp add --scope user vtune-profiler -e VTUNE_PATH="C:/Program Files (x86)/Intel/oneAPI/vtune/2026.1/bin64/vtune.exe" -- vtune-mcp-server
+```
+
+对应的 JSON 配置（`~/.claude.json` 或 `.mcp.json`）：
+
+```json
+"vtune-profiler": {
+  "type": "stdio",
+  "command": "uvx",
+  "args": ["--from", "git+https://github.com/<你的用户名>/vtune-mcp-server", "vtune-mcp-server"],
+  "env": {
+    "VTUNE_PATH": "C:/Program Files (x86)/Intel/oneAPI/vtune/2026.1/bin64/vtune.exe"
+  }
+}
+```
+
+### 方式 2：本地路径注册（开发调试用）
 
 ```bash
 claude mcp add --scope user vtune-profiler -- python "E:\Git\vtune-mcp-server\server.py"
 ```
 
-### 方式 2：手动编辑配置文件
+### 方式 3：手动编辑配置文件
 
 编辑 `~/.claude.json`（即 `C:\Users\<你的用户名>\.claude.json`），找到 `mcpServers` 节点，添加：
 
@@ -36,7 +56,7 @@ claude mcp add --scope user vtune-profiler -- python "E:\Git\vtune-mcp-server\se
 }
 ```
 
-### 方式 3：项目级配置
+### 方式 4：项目级配置（`.mcp.json`）
 
 在项目根目录创建 `.mcp.json`：
 
